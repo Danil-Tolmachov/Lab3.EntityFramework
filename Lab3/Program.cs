@@ -9,6 +9,10 @@ using Lab3.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Lab3.App;
 
@@ -37,15 +41,19 @@ internal static class Program
         builder.AddScoped<IProductService, ProductService>();
         builder.AddScoped<ISupplierService, SupplierService>();
 
+        builder.AddTransient<Store>();
+
         var provider = builder.BuildServiceProvider();
 
-        // <Example>
-        var productService = provider.GetRequiredService<IProductService>();
 
-        var products = await productService.GetAll();
-        // </Example>
+        using (var scope = provider.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ShopContext>();
+            await dbContext.Database.MigrateAsync();
+        }
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new Store());
+        var mainForm = provider.GetRequiredService<Store>();
+        Application.Run(mainForm);
     }
 }

@@ -11,4 +11,18 @@ public class ProductService(IUnitOfWork unitOfWork) : IProductService
     {
         return unitOfWork.ProductRepository.GetAll().ToListAsync();
     }
+
+    public async Task AddProduct(Product product)
+    {
+        if (product == null) throw new ArgumentNullException(nameof(product));
+
+        unitOfWork.ProductRepository.Create(product);
+        await unitOfWork.SaveChangesAsync();
+    }
+
+    public async Task DeleteProduct(Guid id)
+    {
+        await unitOfWork.ProductRepository.Delete(id);
+        await unitOfWork.SaveChangesAsync();
+    }
 }

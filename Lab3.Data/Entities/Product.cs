@@ -13,7 +13,7 @@ public class Product : BaseEntity
 
     public decimal Price { get; set; }
 
-    [Range(1, 100)]
+    [Range(0, 100)]
     public int Discount { get; set; }
 
     // Nav properties
