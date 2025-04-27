@@ -1,8 +1,8 @@
 namespace Lab3
 {
-    public partial class Form1 : Form
+    public partial class Store : Form
     {
-        public Form1()
+        public Store()
         {
             InitializeComponent();
         }
