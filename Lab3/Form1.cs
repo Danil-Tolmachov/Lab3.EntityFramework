@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using Lab3.BLL.Services;
 
 namespace Lab3
 {
@@ -11,13 +12,15 @@ namespace Lab3
     {
         private readonly IProductService _productService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ISupplierService _supplierService;
 
-        public Store(IProductService productService, IServiceProvider serviceProvider)
+        public Store(IProductService productService, IServiceProvider serviceProvider, ISupplierService supplierService)
         {
             InitializeComponent();
 
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _supplierService = supplierService ?? throw new ArgumentNullException(nameof(supplierService));
 
             this.Load += Store_Load;
         }
@@ -37,9 +40,23 @@ namespace Lab3
             }
         }
 
+        private async Task LoadSupplierAsync()
+        {
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error laoding suppliers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
         private async void Store_Load(object? sender, EventArgs e)
         {
             await LoadProductAsync();
+            await LoadSupplierAsync();
         }
         private async void addProductButton_Click(object sender, EventArgs e)
         {
@@ -50,35 +67,23 @@ namespace Lab3
             string discount = discountInputBox.Text.Trim();
             string productSupplier = productSupplientInputNBox.Text.Trim();
 
-            if (string.IsNullOrEmpty(productName))
+            var fields = new Dictionary<string, string>
             {
-                MessageBox.Show($"Product Name can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(description))
+                { "Product Name", productName },
+                { "Description", description },
+                { "Price", price },
+                { "Quantity", inStock },
+                { "Discount", discount },
+                { "Product Supplier", productSupplier }
+            };
+
+            foreach (var field in fields)
             {
-                MessageBox.Show($"Description can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(price))
-            {
-                MessageBox.Show($"Price can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(inStock))
-            {
-                MessageBox.Show($"Quantity can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(discount))
-            {
-                MessageBox.Show($"Discount can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(productSupplier))
-            {
-                MessageBox.Show($"Product Supplier can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                if (string.IsNullOrEmpty(field.Value))
+                {
+                    MessageBox.Show($"{field.Key} can't be empty", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
             }
             if (!decimal.TryParse(price, out decimal _price) || _price < 0)
             {
@@ -103,7 +108,6 @@ namespace Lab3
                 Price = _price,
                 InStock = _inStock,
                 Discount = _discount,
-                //Suppliers
             };
 
             try
@@ -123,7 +127,6 @@ namespace Lab3
             {
                 MessageBox.Show($"Error adding product: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
 
         private async void addSupplierButon_Click(object sender, EventArgs e)
@@ -140,14 +143,16 @@ namespace Lab3
 
             try
             {
-
+                await _supplierService.AddSupplier(newSupplier);
+                await LoadSupplierAsync();
                 SupplierInputBox.Text = string.Empty;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"");
+                MessageBox.Show($"Error adding supplier: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private async void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
