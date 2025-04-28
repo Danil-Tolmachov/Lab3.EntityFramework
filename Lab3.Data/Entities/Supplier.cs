@@ -6,5 +6,5 @@ public class Supplier : BaseEntity
 
 
     // Nav properties
-    public IEnumerable<Product> Products { get; set; } = [];
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }

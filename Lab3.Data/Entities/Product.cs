@@ -17,5 +17,5 @@ public class Product : BaseEntity
     public int Discount { get; set; }
 
     // Nav properties
-    public IEnumerable<Supplier> Suppliers { get; set; } = [];
+    public virtual ICollection<Supplier> Suppliers { get; set; } = new List<Supplier>();
 }
