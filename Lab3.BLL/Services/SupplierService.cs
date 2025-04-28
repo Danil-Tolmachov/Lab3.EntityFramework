@@ -14,6 +14,7 @@ public class SupplierService(IUnitOfWork unitOfWork) : ISupplierService
     {
         return unitOfWork.SupplierRepository.GetAll().ToListAsync();
     }
+
     public async Task AddSupplier(Supplier supplier)
     {
         if (supplier == null) throw new ArgumentNullException(nameof(supplier));
@@ -21,5 +22,12 @@ public class SupplierService(IUnitOfWork unitOfWork) : ISupplierService
 
         unitOfWork.SupplierRepository.Create(supplier);
         await unitOfWork.SaveChangesAsync();
+    }
+
+    public Task<Supplier?> GetByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return Task.FromResult<Supplier?>(null);
+
+        return unitOfWork.SupplierRepository.GetAll().FirstOrDefaultAsync(s => s.Name == name);
     }
 }

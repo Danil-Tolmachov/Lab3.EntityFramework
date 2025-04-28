@@ -2,6 +2,7 @@
 using Lab3.DAL.Entities;
 using Lab3.DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Lab3.BLL.Services;
 
@@ -9,7 +10,10 @@ public class ProductService(IUnitOfWork unitOfWork) : IProductService
 {
     public Task<List<Product>> GetAll()
     {
-        return unitOfWork.ProductRepository.GetAll().ToListAsync();
+        return unitOfWork.ProductRepository
+                         .GetAll()
+                         .Include(p => p.Suppliers)
+                         .ToListAsync();
     }
 
     public async Task AddProduct(Product product)

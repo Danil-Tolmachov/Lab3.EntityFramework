@@ -1,10 +1,10 @@
 using Lab3.BLL.Interfaces;
 using Lab3.DAL.Entities;
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using System.Threading.Tasks;
-using Lab3.BLL.Services;
 
 namespace Lab3
 {
@@ -22,6 +22,8 @@ namespace Lab3
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _supplierService = supplierService ?? throw new ArgumentNullException(nameof(supplierService));
 
+            dataGridView1.CellFormatting += dataGridView1_CellFormatting;
+
             this.Load += Store_Load;
         }
 
@@ -36,28 +38,15 @@ namespace Lab3
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error laoding products: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error loading products: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        private async Task LoadSupplierAsync()
-        {
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error laoding suppliers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
 
         private async void Store_Load(object? sender, EventArgs e)
         {
             await LoadProductAsync();
-            await LoadSupplierAsync();
         }
+
         private async void addProductButton_Click(object sender, EventArgs e)
         {
             string productName = ProductNameInputBox.Text.Trim();
@@ -101,6 +90,22 @@ namespace Lab3
                 return;
             }
 
+            Supplier? foundSuplier = null;
+            try
+            {
+                foundSuplier = await _supplierService.GetByName(productSupplier);
+                if (foundSuplier == null)
+                {
+                    MessageBox.Show($"Supplier '{productSupplier}' not found. Please add the supplier first or check the name", "Supplier Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error finding supplier: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             var newProduct = new Product
             {
                 Name = productName,
@@ -108,6 +113,7 @@ namespace Lab3
                 Price = _price,
                 InStock = _inStock,
                 Discount = _discount,
+                Suppliers = new List<Supplier> { foundSuplier }
             };
 
             try
@@ -116,12 +122,12 @@ namespace Lab3
 
                 await LoadProductAsync();
 
-                ProductNameInputBox.Text = string.Empty;
-                DescriptionInputBox.Text = string.Empty;
-                PriceInputBox.Text = string.Empty;
-                inStockInputBox.Text = string.Empty;
-                discountInputBox.Text = string.Empty;
-                productSupplientInputNBox.Text = string.Empty;
+                ProductNameInputBox.Clear();
+                DescriptionInputBox.Clear();
+                PriceInputBox.Clear();
+                inStockInputBox.Clear();
+                discountInputBox.Clear();
+                productSupplientInputNBox.Clear();
             }
             catch (Exception ex)
             {
@@ -144,8 +150,7 @@ namespace Lab3
             try
             {
                 await _supplierService.AddSupplier(newSupplier);
-                await LoadSupplierAsync();
-                SupplierInputBox.Text = string.Empty;
+                SupplierInputBox.Clear();
             }
             catch (Exception ex)
             {
@@ -183,6 +188,23 @@ namespace Lab3
             else
             {
                 MessageBox.Show("Please select product to delete", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dataGridView1.Columns[e.ColumnIndex].Name == "suppliersDataGridViewTextBoxColumn")
+            {
+                if (dataGridView1.Rows[e.RowIndex].DataBoundItem is Product product && product.Suppliers != null)
+                {
+                    e.Value = string.Join(", ", product.Suppliers.Select(s => s.Name));
+                    e.FormattingApplied = true;
+                }
+                else
+                {
+                    e.Value = string.Empty;
+                    e.FormattingApplied = true;
+                }
             }
         }
     }
